@@ -33,35 +33,63 @@ elif ENVIRONMENT == "jupyterhub":
     PROJECT_ROOT = Path(os.path.expanduser("~")) / "funnelpulse"
 elif ENVIRONMENT == "gcp":
     # Google Cloud Platform paths
-    GCS_BUCKET = "your-bucket-name"  # Update this
-    PROJECT_ROOT = Path(f"gs://{GCS_BUCKET}/funnelpulse")
+    GCS_BUCKET = "funnelpulse-data-479512"
+    GCS_PROJECT = "funnelpulse-479512"
+    GCS_REGION = "us-central1"
+    # Note: Using string paths for GCS (Path doesn't support gs://)
+    PROJECT_ROOT = f"gs://{GCS_BUCKET}"
 else:
     raise ValueError(f"Unknown environment: {ENVIRONMENT}")
 
-# Directory paths
-DATA_RAW_DIR = PROJECT_ROOT / "data_raw"
-TABLES_DIR = PROJECT_ROOT / "tables"
-STREAM_INPUT_DIR = PROJECT_ROOT / "stream_input"
-CHECKPOINTS_DIR = PROJECT_ROOT / "checkpoints"
+# Directory paths (use strings for GCP, Path for local)
+if ENVIRONMENT == "gcp":
+    DATA_RAW_DIR = f"{PROJECT_ROOT}/data_raw"
+    TABLES_DIR = f"{PROJECT_ROOT}/tables"
+    STREAM_INPUT_DIR = f"{PROJECT_ROOT}/stream_input"
+    CHECKPOINTS_DIR = f"{PROJECT_ROOT}/checkpoints"
 
-# Table paths - Bronze, Silver, Gold layers
-BRONZE_PATH = TABLES_DIR / "bronze_events"
-SILVER_PATH = TABLES_DIR / "silver_events"
+    # Table paths - Bronze, Silver, Gold layers
+    BRONZE_PATH = f"{TABLES_DIR}/bronze_events"
+    SILVER_PATH = f"{TABLES_DIR}/silver_events"
 
-# Gold tables (batch)
-GOLD_FUNNEL_HOURLY_BRAND = TABLES_DIR / "gold_funnel_hourly_brand"
-GOLD_FUNNEL_DAILY_BRAND = TABLES_DIR / "gold_funnel_daily_brand"
-GOLD_FUNNEL_DAILY_CATEGORY = TABLES_DIR / "gold_funnel_daily_category"
-GOLD_FUNNEL_HOURLY_PRICE_BAND = TABLES_DIR / "gold_funnel_hourly_price_band"
+    # Gold tables (batch)
+    GOLD_FUNNEL_HOURLY_BRAND = f"{TABLES_DIR}/gold_funnel_hourly_brand"
+    GOLD_FUNNEL_DAILY_BRAND = f"{TABLES_DIR}/gold_funnel_daily_brand"
+    GOLD_FUNNEL_DAILY_CATEGORY = f"{TABLES_DIR}/gold_funnel_daily_category"
+    GOLD_FUNNEL_HOURLY_PRICE_BAND = f"{TABLES_DIR}/gold_funnel_hourly_price_band"
 
-# Gold tables (streaming)
-GOLD_STREAM_FUNNEL_HOURLY_BRAND = TABLES_DIR / "gold_stream_funnel_hourly_brand"
+    # Gold tables (streaming)
+    GOLD_STREAM_FUNNEL_HOURLY_BRAND = f"{TABLES_DIR}/gold_stream_funnel_hourly_brand"
 
-# Anomaly detection output
-GOLD_ANOMALIES_HOURLY_BRAND = TABLES_DIR / "gold_anomalies_hourly_brand"
+    # Anomaly detection output
+    GOLD_ANOMALIES_HOURLY_BRAND = f"{TABLES_DIR}/gold_anomalies_hourly_brand"
 
-# Streaming checkpoint
-CHECKPOINT_STREAM_HOURLY_BRAND = CHECKPOINTS_DIR / "stream_hourly_brand"
+    # Streaming checkpoint
+    CHECKPOINT_STREAM_HOURLY_BRAND = f"{CHECKPOINTS_DIR}/stream_hourly_brand"
+else:
+    DATA_RAW_DIR = PROJECT_ROOT / "data_raw"
+    TABLES_DIR = PROJECT_ROOT / "tables"
+    STREAM_INPUT_DIR = PROJECT_ROOT / "stream_input"
+    CHECKPOINTS_DIR = PROJECT_ROOT / "checkpoints"
+
+    # Table paths - Bronze, Silver, Gold layers
+    BRONZE_PATH = TABLES_DIR / "bronze_events"
+    SILVER_PATH = TABLES_DIR / "silver_events"
+
+    # Gold tables (batch)
+    GOLD_FUNNEL_HOURLY_BRAND = TABLES_DIR / "gold_funnel_hourly_brand"
+    GOLD_FUNNEL_DAILY_BRAND = TABLES_DIR / "gold_funnel_daily_brand"
+    GOLD_FUNNEL_DAILY_CATEGORY = TABLES_DIR / "gold_funnel_daily_category"
+    GOLD_FUNNEL_HOURLY_PRICE_BAND = TABLES_DIR / "gold_funnel_hourly_price_band"
+
+    # Gold tables (streaming)
+    GOLD_STREAM_FUNNEL_HOURLY_BRAND = TABLES_DIR / "gold_stream_funnel_hourly_brand"
+
+    # Anomaly detection output
+    GOLD_ANOMALIES_HOURLY_BRAND = TABLES_DIR / "gold_anomalies_hourly_brand"
+
+    # Streaming checkpoint
+    CHECKPOINT_STREAM_HOURLY_BRAND = CHECKPOINTS_DIR / "stream_hourly_brand"
 
 # =============================================================================
 # SPARK CONFIGURATION
