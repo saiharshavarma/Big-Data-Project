@@ -9,6 +9,13 @@ import os
 from pathlib import Path
 
 # =============================================================================
+# JAVA CONFIGURATION (required for PySpark 3.4+)
+# =============================================================================
+# Set JAVA_HOME to Java 17 before any Spark imports
+JAVA_HOME = "/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"
+os.environ["JAVA_HOME"] = JAVA_HOME
+
+# =============================================================================
 # ENVIRONMENT SETTING
 # =============================================================================
 # Options: "local", "jupyterhub", "gcp"
