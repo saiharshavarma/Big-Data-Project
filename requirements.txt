@@ -1,0 +1,22 @@
+# FunnelPulse - Real-time E-commerce Funnel Analytics
+# Python dependencies for local development
+
+# Core Spark processing
+pyspark>=3.4.0
+
+# Data manipulation and analysis
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Visualization
+matplotlib>=3.7.0
+
+# Kafka integration (for production streaming)
+kafka-python>=2.0.2
+
+# Jupyter notebooks
+jupyter>=1.0.0
+jupyterlab>=4.0.0
+
+# Optional: For downloading Kaggle dataset
+kaggle>=1.5.0
