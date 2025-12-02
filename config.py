@@ -19,7 +19,7 @@ os.environ["JAVA_HOME"] = JAVA_HOME
 # ENVIRONMENT SETTING
 # =============================================================================
 # Options: "local", "jupyterhub", "gcp"
-ENVIRONMENT = "local"
+ENVIRONMENT = "gcp"
 
 # =============================================================================
 # PATH CONFIGURATION
@@ -33,8 +33,8 @@ elif ENVIRONMENT == "jupyterhub":
     PROJECT_ROOT = Path(os.path.expanduser("~")) / "funnelpulse"
 elif ENVIRONMENT == "gcp":
     # Google Cloud Platform paths
-    GCS_BUCKET = "funnelpulse-data-479512"
-    GCS_PROJECT = "funnelpulse-479512"
+    GCS_BUCKET = "funnelpulse-ss18851-data"
+    GCS_PROJECT = "funnelpulse-479923"
     GCS_REGION = "us-central1"
     # Note: Using string paths for GCS (Path doesn't support gs://)
     PROJECT_ROOT = f"gs://{GCS_BUCKET}"
@@ -111,9 +111,10 @@ SPARK_CONFIG = {
 # =============================================================================
 
 KAFKA_CONFIG = {
-    "bootstrap_servers": "localhost:9092",  # Update for production
-    "topic": "funnelpulse_events",
-    "consumer_group": "funnelpulse_consumer",
+    "bootstrap_servers": os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka-broker-1:9092"),
+    "topic_events": os.getenv("KAFKA_TOPIC_EVENTS", "funnelpulse_events"),
+    "security_protocol": "PLAINTEXT",
+    "session_key": "user_session",
 }
 
 # Replay producer settings
@@ -122,6 +123,22 @@ KAFKA_REPLAY_CONFIG = {
     "sleep_every_n": 5000,
     "sleep_seconds": 0.5,
 }
+
+# =============================================================================
+# KAFKA CONFIGURATION
+# =============================================================================
+
+# These can be overridden with environment variables when deploying
+KAFKA_BOOTSTRAP_SERVERS = "kafka-broker-1.us-central1-a.c.funnelpulse-479923.internal:9092"
+KAFKA_TOPIC_EVENTS = "funnelpulse_events"
+
+# Optional: separate output/checkpoint for Kafka-based streaming
+if "gs://" in str(TABLES_DIR):
+    GOLD_STREAM_FUNNEL_HOURLY_BRAND_KAFKA = f"{TABLES_DIR}/gold_stream_funnel_hourly_brand_kafka"
+    CHECKPOINT_STREAM_HOURLY_BRAND_KAFKA = f"{CHECKPOINTS_DIR}/stream_hourly_brand_kafka"
+else:
+    GOLD_STREAM_FUNNEL_HOURLY_BRAND_KAFKA = TABLES_DIR / "gold_stream_funnel_hourly_brand_kafka"
+    CHECKPOINT_STREAM_HOURLY_BRAND_KAFKA = CHECKPOINTS_DIR / "stream_hourly_brand_kafka"
 
 # =============================================================================
 # DATA SCHEMA

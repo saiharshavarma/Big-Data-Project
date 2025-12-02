@@ -1,0 +1,6 @@
+__pycache__/
+checkpoints/
+tables/
+stream_input/
+notebooks/.ipynb_checkpoints/
+*.pyc

@@ -13,7 +13,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
 
 # GCS Configuration
-GCS_BUCKET = "gs://funnelpulse-data-479512"
+GCS_BUCKET = "gs://funnelpulse-ss18851-data"
 TABLES_DIR = f"{GCS_BUCKET}/tables"
 STREAM_INPUT_DIR = f"{GCS_BUCKET}/stream_input"
 

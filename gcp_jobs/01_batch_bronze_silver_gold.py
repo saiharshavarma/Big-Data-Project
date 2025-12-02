@@ -15,7 +15,7 @@ from pyspark.sql.functions import (
 )
 
 # GCS Configuration
-GCS_BUCKET = "gs://funnelpulse-data-479512"
+GCS_BUCKET = "gs://funnelpulse-ss18851-data"
 RAW_DIR = f"{GCS_BUCKET}/data_raw"
 TABLES_DIR = f"{GCS_BUCKET}/tables"
 

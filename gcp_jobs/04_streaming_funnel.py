@@ -20,7 +20,7 @@ from pyspark.sql.functions import (
 import time
 
 # GCS Configuration
-GCS_BUCKET = "gs://funnelpulse-data-479512"
+GCS_BUCKET = "gs://funnelpulse-ss18851-data"
 TABLES_DIR = f"{GCS_BUCKET}/tables"
 STREAM_INPUT_DIR = f"{GCS_BUCKET}/stream_input"
 CHECKPOINTS_DIR = f"{GCS_BUCKET}/checkpoints"
@@ -32,7 +32,7 @@ STREAM_CHECKPOINT = f"{CHECKPOINTS_DIR}/stream_hourly_brand"
 # Streaming parameters
 MAX_FILES_PER_TRIGGER = 2  # Process 2 files per micro-batch
 PROCESSING_TIME = "30 seconds"  # Trigger interval
-MAX_BATCHES = 30  # Stop after this many batches (for demo purposes)
+MAX_BATCHES = 3  # Stop after this many batches (for demo purposes)
 
 
 def create_spark_session():
