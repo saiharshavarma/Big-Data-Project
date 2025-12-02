@@ -46,13 +46,13 @@ E-commerce platforms generate millions of user events daily (views, cart additio
 
 FunnelPulse provides:
 
-| Feature | Description |
-|---------|-------------|
-| **Batch Analytics** | Historical funnel metrics by brand, category, and price band |
-| **Streaming Analytics** | Real-time hourly funnel metrics with watermarking |
-| **Anomaly Detection** | Z-score based detection of conversion drops and spikes |
+| Feature                     | Description                                                         |
+| --------------------------- | ------------------------------------------------------------------- |
+| **Batch Analytics**         | Historical funnel metrics by brand, category, and price band        |
+| **Streaming Analytics**     | Real-time hourly funnel metrics with watermarking                   |
+| **Anomaly Detection**       | Z-score based detection of conversion drops and spikes              |
 | **Multi-dimensional Views** | Analyze funnels across brands, categories, time, and price segments |
-| **Cloud Ready** | One-click deployment to GCP Dataproc |
+| **Cloud Ready**             | One-click deployment to GCP Dataproc                                |
 
 ### Key Metrics Computed
 
@@ -91,11 +91,11 @@ FunnelPulse provides:
 
 ### Lakehouse Layers
 
-| Layer | Purpose | Storage | Partitioning |
-|-------|---------|---------|--------------|
-| **Bronze** | Raw ingestion, minimal transformation | Parquet | `event_date` |
-| **Silver** | Cleaned, deduplicated, normalized | Parquet | `event_date` |
-| **Gold** | Business-level aggregations | Parquet | `window_date` or `date` |
+| Layer      | Purpose                               | Storage | Partitioning            |
+| ---------- | ------------------------------------- | ------- | ----------------------- |
+| **Bronze** | Raw ingestion, minimal transformation | Parquet | `event_date`            |
+| **Silver** | Cleaned, deduplicated, normalized     | Parquet | `event_date`            |
+| **Gold**   | Business-level aggregations           | Parquet | `window_date` or `date` |
 
 ---
 
@@ -125,11 +125,13 @@ Big-Data-Project/
 │   ├── 04_streaming_funnel.py
 │   ├── 05_anomaly_detection.py
 │   ├── 06_summary_report.py
+│   ├── inspect_kafka_stream_gold.py
 │   └── test_gcp_pipeline.py
 │
-├── kafka/                       # Kafka integration scripts (for production)
-│   ├── kafka_replay_producer.py
-│   └── streaming_from_kafka.py
+├── kafka/                       # Kafka integration Spark scripts
+│   ├── replay_from_bronze_spark.py
+│   ├── funnel_funnel_hourly_brand_from_kafka.py
+│   └── synthetic_producer.py
 │
 ├── data_raw/                    # Raw CSV files (gitignored)
 │   ├── 2019-Oct.csv
@@ -155,27 +157,27 @@ Big-Data-Project/
 
 **Source**: [Kaggle - eCommerce Events History in Cosmetics Shop](https://www.kaggle.com/datasets/mkechinov/ecommerce-events-history-in-cosmetics-shop)
 
-| Attribute | Value |
-|-----------|-------|
-| **Total Events** | ~8.7 million |
-| **Time Period** | October - November 2019 |
-| **Event Types** | view, cart, purchase, remove_from_cart |
-| **Dimensions** | brand, category, price, user_id, session |
-| **File Size** | ~1.5 GB (CSV) |
+| Attribute        | Value                                    |
+| ---------------- | ---------------------------------------- |
+| **Total Events** | ~8.7 million                             |
+| **Time Period**  | October - November 2019                  |
+| **Event Types**  | view, cart, purchase, remove_from_cart   |
+| **Dimensions**   | brand, category, price, user_id, session |
+| **File Size**    | ~1.5 GB (CSV)                            |
 
 ### Sample Record
 
 ```json
 {
-  "event_time": "2019-10-01 00:00:00",
-  "event_type": "view",
-  "product_id": 5300797,
-  "category_id": 2053013563173241677,
-  "category_code": "electronics.smartphone",
-  "brand": "samsung",
-  "price": 274.85,
-  "user_id": 541312140,
-  "user_session": "72d76fde-8bb3-4e00-8c23-a032dfed738c"
+	"event_time": "2019-10-01 00:00:00",
+	"event_type": "view",
+	"product_id": 5300797,
+	"category_id": 2053013563173241677,
+	"category_code": "electronics.smartphone",
+	"brand": "samsung",
+	"price": 274.85,
+	"user_id": 541312140,
+	"user_session": "72d76fde-8bb3-4e00-8c23-a032dfed738c"
 }
 ```
 
@@ -247,19 +249,27 @@ java -version  # Should show version 17.x
 
 #### One-Click Deployment ⭐
 
+The `gcp_setup.sh` script automates the entire GCP deployment.
+
 ```bash
 # Setup cluster + upload scripts (takes ~3 minutes)
 ./gcp_setup.sh
 
-# Setup + run ALL pipeline jobs
+# Run the full BATCH + FILE-BASED streaming pipeline
 ./gcp_setup.sh --run-all
 
-# Check status
+# Run the full KAFKA-BASED streaming pipeline
+./gcp_setup.sh --run-kafka
+
+# Check status of cluster, Kafka VM, and GCS bucket
 ./gcp_setup.sh --status
 
-# Delete cluster (preserves data in GCS)
+# Delete cluster and Kafka VM (preserves data in GCS)
 ./gcp_setup.sh --delete
 ```
+
+- `--run-all`: Executes the original file-based batch and streaming pipeline.
+- `--run-kafka`: Deploys a Kafka VM and runs the end-to-end Kafka-based streaming pipeline.
 
 #### Manual GCP Setup
 
@@ -304,14 +314,14 @@ gcloud dataproc jobs submit pyspark \
 
 ### Notebook/Job Descriptions
 
-| # | Notebook / GCP Job | Purpose | Input | Output |
-|---|-------------------|---------|-------|--------|
-| 01 | `batch_bronze_silver_gold` | Core lakehouse pipeline | Raw CSV | bronze, silver, gold_hourly_brand |
-| 02 | `additional_gold_tables` | Extended analytics views | silver | gold_daily_brand, gold_daily_category, gold_hourly_price |
-| 03 | `build_stream_input` | Prepare streaming simulation | bronze | stream_input/ (50 files) |
-| 04 | `streaming_funnel` | Real-time aggregation | stream_input | gold_stream_funnel_hourly_brand |
-| 05 | `anomaly_detection` | Statistical anomaly flagging | gold_hourly_brand | gold_anomalies_hourly_brand |
-| 06 | `visualizations` / `summary_report` | Charts / stats | All gold tables | Visual output |
+| #   | Notebook / GCP Job                  | Purpose                                 | Input             | Output                                                   |
+| --- | ----------------------------------- | --------------------------------------- | ----------------- | -------------------------------------------------------- |
+| 01  | `batch_bronze_silver_gold`          | Core lakehouse pipeline                 | Raw CSV           | bronze, silver, gold_hourly_brand                        |
+| 02  | `additional_gold_tables`            | Extended analytics views                | silver            | gold_daily_brand, gold_daily_category, gold_hourly_price |
+| 03  | `build_stream_input`                | Prepare file-based streaming simulation | bronze            | stream_input/ (50 files)                                 |
+| 04  | `streaming_funnel`                  | Real-time aggregation from files        | stream_input      | gold_stream_funnel_hourly_brand                          |
+| 05  | `anomaly_detection`                 | Statistical anomaly flagging            | gold_hourly_brand | gold_anomalies_hourly_brand                              |
+| 06  | `visualizations` / `summary_report` | Charts / stats                          | All gold tables   | Visual output                                            |
 
 ### Data Flow & Row Counts
 
@@ -385,6 +395,21 @@ gcloud dataproc jobs submit pyspark gs://funnelpulse-data-479512/jobs/06_summary
 
 Or use the one-click script: `./gcp_setup.sh --run-all`
 
+### 7.3 GCP (Kafka Streaming Pipeline)
+
+To run the end-to-end Kafka-based streaming pipeline, use the one-click script:
+
+```bash
+# Run the entire Kafka-based streaming pipeline
+./gcp_setup.sh --run-kafka
+```
+
+This command orchestrates the entire process:
+
+1.  **Replays** historical data from the `bronze` table into a Kafka topic (`funnelpulse_events`) using a Dataproc job.
+2.  **Starts** a continuous structured streaming job on Dataproc to consume from Kafka and write to the `gold_stream_funnel_hourly_brand_kafka` GCS table.
+3.  **Runs** an inspect job to validate the output table by printing its schema and row counts.
+
 ---
 
 ## 8. Configuration
@@ -419,10 +444,10 @@ ANOMALY_CONFIG = {
 
 ### Environment-Specific Paths
 
-| Environment | Storage Path |
-|-------------|--------------|
-| local | `./tables/bronze_events` |
-| gcp | `gs://funnelpulse-data-479512/tables/bronze_events` |
+| Environment | Storage Path                                        |
+| ----------- | --------------------------------------------------- |
+| local       | `./tables/bronze_events`                            |
+| gcp         | `gs://funnelpulse-data-479512/tables/bronze_events` |
 
 ---
 
@@ -430,41 +455,41 @@ ANOMALY_CONFIG = {
 
 ### Bronze/Silver Events
 
-| Column | Type | Description |
-|--------|------|-------------|
-| event_time | timestamp | Event timestamp |
-| event_type | string | view, cart, purchase, remove_from_cart |
-| product_id | int | Product identifier |
-| category_id | long | Category identifier |
-| category_code | string | Category hierarchy |
-| brand | string | Product brand |
-| price | double | Product price |
-| user_id | int | User identifier |
-| user_session | string | Session UUID |
-| event_date | date | Partition column |
+| Column        | Type      | Description                            |
+| ------------- | --------- | -------------------------------------- |
+| event_time    | timestamp | Event timestamp                        |
+| event_type    | string    | view, cart, purchase, remove_from_cart |
+| product_id    | int       | Product identifier                     |
+| category_id   | long      | Category identifier                    |
+| category_code | string    | Category hierarchy                     |
+| brand         | string    | Product brand                          |
+| price         | double    | Product price                          |
+| user_id       | int       | User identifier                        |
+| user_session  | string    | Session UUID                           |
+| event_date    | date      | Partition column                       |
 
 ### Silver Additional Columns
 
-| Column | Type | Description |
-|--------|------|-------------|
-| brand_norm | string | Lowercase normalized brand |
-| category_code_norm | string | Normalized category |
-| dq_missing_* | boolean | Data quality flags |
+| Column             | Type    | Description                |
+| ------------------ | ------- | -------------------------- |
+| brand_norm         | string  | Lowercase normalized brand |
+| category_code_norm | string  | Normalized category        |
+| dq*missing*\*      | boolean | Data quality flags         |
 
 ### Gold Funnel Metrics
 
-| Column | Type | Description |
-|--------|------|-------------|
-| window_start | timestamp | Hour window start |
-| window_end | timestamp | Hour window end |
-| brand | string | Brand name |
-| views | long | View event count |
-| carts | long | Cart event count |
-| purchases | long | Purchase event count |
-| revenue | double | Sum of purchase prices |
-| view_to_cart_rate | double | carts / views |
-| cart_to_purchase_rate | double | purchases / carts |
-| conversion_rate | double | purchases / views |
+| Column                | Type      | Description            |
+| --------------------- | --------- | ---------------------- |
+| window_start          | timestamp | Hour window start      |
+| window_end            | timestamp | Hour window end        |
+| brand                 | string    | Brand name             |
+| views                 | long      | View event count       |
+| carts                 | long      | Cart event count       |
+| purchases             | long      | Purchase event count   |
+| revenue               | double    | Sum of purchase prices |
+| view_to_cart_rate     | double    | carts / views          |
+| cart_to_purchase_rate | double    | purchases / carts      |
+| conversion_rate       | double    | purchases / views      |
 
 ---
 
@@ -475,10 +500,12 @@ ANOMALY_CONFIG = {
 FunnelPulse uses **Z-score based anomaly detection**:
 
 1. **Compute Baselines**:
+
    - Per-brand: mean and stddev of conversion rate across all hours
    - Per-brand-hour: mean and stddev at each hour of day (0-23)
 
 2. **Calculate Z-scores**:
+
    ```
    z_brand = (current_conversion - brand_mean) / brand_std
    z_brand_hour = (current_conversion - brand_hour_mean) / brand_hour_std
@@ -506,17 +533,20 @@ FunnelPulse uses **Z-score based anomaly detection**:
 
 ### Cost Estimate
 
-| Resource | Configuration | Hourly Cost | Monthly (8hr/day) |
-|----------|---------------|-------------|-------------------|
-| Dataproc Master | n1-standard-2 | ~$0.10 | ~$17 |
-| Dataproc Workers (2) | n1-standard-2 | ~$0.20 | ~$34 |
-| GCS Storage | ~1GB | ~$0.02 | ~$0.02 |
-| **Total** | | **~$0.32/hr** | **~$51/month** |
+| Resource             | Configuration | Hourly Cost   | Monthly (8hr/day) |
+| -------------------- | ------------- | ------------- | ----------------- |
+| Dataproc Master      | n1-standard-2 | ~$0.10        | ~$17              |
+| Dataproc Workers (2) | n1-standard-2 | ~$0.20        | ~$34              |
+| Kafka VM (GCE)       | e2-standard-2 | ~$0.07        | ~$16              |
+| GCS Storage          | ~1GB          | ~$0.02        | ~$0.02            |
+| **Total**            |               | **~$0.39/hr** | **~$67/month**    |
+
+Note: Running the Kafka pipeline (`--run-kafka`) provisions an additional GCE virtual machine (`kafka-broker-1`) which incurs costs.
 
 ### Cost-Saving Tips
 
 ```bash
-# Always delete cluster when not in use!
+# Always delete cluster AND Kafka VM when not in use!
 ./gcp_setup.sh --delete
 
 # Check for orphaned resources
@@ -531,13 +561,13 @@ gcloud dataproc clusters list --region=us-central1
 
 ### Common Issues
 
-| Issue | Symptom | Solution |
-|-------|---------|----------|
-| **Java Version** | `UnsupportedClassVersionError: class file version 61.0` | Install Java 17 and set JAVA_HOME |
-| **Path with Spaces** | `No such file or directory` | Use Python `os` module instead of bash |
-| **GCS Permission** | `AccessDeniedException: 403` | Grant Storage Admin role to service account |
-| **Port Conflict** | `Service 'SparkUI' could not bind on port 4040` | Normal - Spark auto-finds next port |
-| **Out of Memory** | `java.lang.OutOfMemoryError` | Increase `driver_memory` in config.py |
+| Issue                | Symptom                                                 | Solution                                    |
+| -------------------- | ------------------------------------------------------- | ------------------------------------------- |
+| **Java Version**     | `UnsupportedClassVersionError: class file version 61.0` | Install Java 17 and set JAVA_HOME           |
+| **Path with Spaces** | `No such file or directory`                             | Use Python `os` module instead of bash      |
+| **GCS Permission**   | `AccessDeniedException: 403`                            | Grant Storage Admin role to service account |
+| **Port Conflict**    | `Service 'SparkUI' could not bind on port 4040`         | Normal - Spark auto-finds next port         |
+| **Out of Memory**    | `java.lang.OutOfMemoryError`                            | Increase `driver_memory` in config.py       |
 
 ### Debugging Commands
 
@@ -559,14 +589,14 @@ gcloud dataproc clusters describe funnelpulse-cluster --region=us-central1
 
 ### Recommended Next Steps
 
-| Priority | Enhancement | Description |
-|----------|-------------|-------------|
-| **HIGH** | Kafka Integration | Replace file-based streaming with Kafka (see Section 14) |
-| **HIGH** | Alerting System | Email/Slack notifications for anomalies |
-| **MEDIUM** | Dashboard | Streamlit/Dash interactive visualization |
-| **MEDIUM** | ML Anomaly Detection | Isolation Forest, LSTM for better detection |
-| **LOW** | CI/CD | GitHub Actions, Terraform for infrastructure |
-| **LOW** | Data Quality | Great Expectations integration |
+| Priority   | Enhancement              | Description                                                              |
+| ---------- | ------------------------ | ------------------------------------------------------------------------ |
+| **HIGH**   | Harden Kafka Integration | Productionize Kafka (security, HA, managed service like Confluent Cloud) |
+| **HIGH**   | Alerting System          | Email/Slack notifications for anomalies                                  |
+| **MEDIUM** | Dashboard                | Streamlit/Dash interactive visualization                                 |
+| **MEDIUM** | ML Anomaly Detection     | Isolation Forest, LSTM for better detection                              |
+| **LOW**    | CI/CD                    | GitHub Actions, Terraform for infrastructure                             |
+| **LOW**    | Data Quality             | Great Expectations integration                                           |
 
 ### Production Architecture Vision
 
@@ -591,38 +621,58 @@ gcloud dataproc clusters describe funnelpulse-cluster --region=us-central1
 
 ## 14. Kafka Integration (For Production)
 
-The `kafka/` directory contains reference implementations for moving from file-based streaming to Kafka:
+The project now includes a fully functional Kafka-based streaming pipeline on GCP, orchestrated by the `gcp_setup.sh --run-kafka` command. This provides a production-grade alternative to the file-based streaming simulation.
 
-### kafka_replay_producer.py
+### Architecture
 
-Replays bronze events into a Kafka topic (replaces `03_build_stream_input`):
+The Kafka integration consists of:
+
+- A **GCE Virtual Machine** (`kafka-broker-1`) running Zookeeper and Kafka in Docker containers.
+- A Spark job (`replay_from_bronze_spark.py`) to replay historical bronze data into the `funnelpulse_events` Kafka topic.
+- A continuous Spark Structured Streaming job (`funnel_funnel_hourly_brand_from_kafka.py`) that consumes from Kafka.
+- A new gold table in GCS: `gold_stream_funnel_hourly_brand_kafka`.
+
+This setup allows Dataproc and the Kafka VM to communicate efficiently over GCP's internal network.
+
+### Scripts
+
+The core scripts for this pipeline are located in the `kafka/` and `gcp_jobs/` directories:
+
+| Script                                     | Location    | Purpose                                                                                                                                  |
+| ------------------------------------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `replay_from_bronze_spark.py`              | `kafka/`    | A Spark batch job that reads from the bronze table and publishes events to a Kafka topic. Replaces `03_build_stream_input.py`.           |
+| `funnel_funnel_hourly_brand_from_kafka.py` | `kafka/`    | A Spark streaming job that reads from Kafka, computes funnel metrics, and writes to a gold GCS table. Replaces `04_streaming_funnel.py`. |
+| `inspect_kafka_stream_gold.py`             | `gcp_jobs/` | A utility job to read and display the contents of the Kafka-based streaming gold table for validation.                                   |
+
+### Configuration Snippets
+
+Key configuration is handled automatically by `gcp_setup.sh`, which passes the internal Kafka address (`kafka-broker-1:9092`) to the Dataproc jobs.
 
 ```python
-# Key configuration
-KAFKA_BOOTSTRAP_SERVERS = "your-kafka-cluster:9092"
+# From funnel_funnel_hourly_brand_from_kafka.py
+# Note: KAFKA_BOOTSTRAP_SERVERS is injected via environment variable on GCP
+KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 KAFKA_TOPIC = "funnelpulse_events"
-BRONZE_PATH = "gs://your-bucket/tables/bronze_events"
-```
 
-### streaming_from_kafka.py
-
-Consumes from Kafka and computes streaming gold (replaces `04_streaming_funnel`):
-
-```python
-# Key configuration
-KAFKA_BOOTSTRAP_SERVERS = "your-kafka-cluster:9092"
-KAFKA_TOPIC = "funnelpulse_events"
-GOLD_STREAM_PATH = "gs://your-bucket/tables/gold_stream_funnel_hourly_brand"
+df_kafka = (
+    spark.readStream.format("kafka")
+    .option("kafka.bootstrap.servers", KAFKA_BOOTSTRAP_SERVERS)
+    .option("subscribe", KAFKA_TOPIC)
+    .load()
+)
 ```
 
 ### Migration Path
 
-| Current (File-based) | Production (Kafka) |
-|---------------------|-------------------|
-| `03_build_stream_input.py` | `kafka_replay_producer.py` |
-| `04_streaming_funnel.py` | `streaming_from_kafka.py` |
+The Kafka pipeline is now the primary streaming implementation on GCP. The file-based approach remains for local development and basic validation.
 
-The cleaning logic, aggregations, and anomaly detection remain unchanged - only the transport layer changes.
+| Environment       | Old (File-based)              | New (Kafka-based on GCP)                         |
+| ----------------- | ----------------------------- | ------------------------------------------------ |
+| **Data Source**   | `stream_input/` Parquet files | `funnelpulse_events` Kafka Topic                 |
+| **Replay Job**    | `03_build_stream_input.py`    | `kafka/replay_from_bronze_spark.py`              |
+| **Streaming Job** | `04_streaming_funnel.py`      | `kafka/funnel_funnel_hourly_brand_from_kafka.py` |
+
+The cleaning logic, aggregations, and anomaly detection remain unchanged - only the transport layer is different.
 
 ---
 
@@ -630,21 +680,21 @@ The cleaning logic, aggregations, and anomaly detection remain unchanged - only 
 
 FunnelPulse provides a complete, production-ready foundation for e-commerce funnel analytics:
 
-| Component | Status |
-|-----------|--------|
-| Batch Pipeline (Bronze → Silver → Gold) | ✅ Complete |
-| Streaming Pipeline | ✅ Complete (file-based) |
-| Anomaly Detection | ✅ Complete |
-| Local Development | ✅ Working |
-| GCP Dataproc Deployment | ✅ Working |
-| One-Click Setup Script | ✅ Available |
-| Kafka Integration | 📋 Reference implementation provided |
+| Component                               | Status                                   |
+| --------------------------------------- | ---------------------------------------- |
+| Batch Pipeline (Bronze → Silver → Gold) | ✅ Complete                              |
+| Streaming Pipeline                      | ✅ Complete (file-based)                 |
+| Anomaly Detection                       | ✅ Complete                              |
+| Local Development                       | ✅ Working                               |
+| GCP Dataproc Deployment                 | ✅ Working                               |
+| One-Click Setup Script                  | ✅ Available                             |
+| Kafka Integration                       | ✅ Implemented (GCP Dataproc + Kafka VM) |
 
 **Next Developer Focus Areas**:
-1. Replace file-based streaming with Kafka
-2. Add alerting/notification system
-3. Build interactive dashboard
-4. Enhance anomaly detection with ML models
+
+1.  Add alerting/notification system
+2.  Build interactive dashboard
+3.  Enhance anomaly detection with ML models
 
 ---
 
@@ -662,4 +712,4 @@ MIT License - See [LICENSE](LICENSE) for details.
 
 ---
 
-*Built with Apache Spark on Google Cloud Platform*
+_Built with Apache Spark on Google Cloud Platform_
