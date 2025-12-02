@@ -543,16 +543,43 @@ FunnelPulse uses **Z-score based anomaly detection**:
 
 Note: Running the Kafka pipeline (`--run-kafka`) provisions an additional GCE virtual machine (`kafka-broker-1`) which incurs costs.
 
-### Cost-Saving Tips
+### Cost-Saving Tips & Cleanup
+
+#### Cleanup Checklist
+
+The primary method for cleaning up resources is the `gcp_setup.sh` script.
 
 ```bash
 # Always delete cluster AND Kafka VM when not in use!
 ./gcp_setup.sh --delete
+```
 
-# Check for orphaned resources
-gcloud compute instances list --project=funnelpulse-479512
-gcloud compute disks list --project=funnelpulse-479512
+This command is designed to remove all major cost-incurring resources:
+
+- **Deletes the Dataproc cluster**: This is a primary driver of cost.
+- **Deletes the Kafka VM**: The `kafka-broker-1` GCE instance is also removed.
+- **Preserves GCS data**: Your data in `gs://funnelpulse-data-479512/` remains untouched.
+
+#### Verification Commands
+
+After running the delete script, you can manually verify that all billable compute resources have been removed using the following commands. If the output for each is empty, you are safe from ongoing compute costs.
+
+```bash
+# 1. Verify no Dataproc clusters are running
 gcloud dataproc clusters list --region=us-central1
+# Expected: Listed 0 items.
+
+# 2. Verify no Compute Engine VMs are running
+gcloud compute instances list
+# Expected: Listed 0 items.
+
+# 3. Verify no orphaned persistent disks remain
+gcloud compute disks list
+# Expected: Listed 0 items.
+
+# 4. Verify no reserved external IP addresses remain
+gcloud compute addresses list
+# Expected: Listed 0 items.
 ```
 
 ---
@@ -568,6 +595,16 @@ gcloud dataproc clusters list --region=us-central1
 | **GCS Permission**   | `AccessDeniedException: 403`                            | Grant Storage Admin role to service account |
 | **Port Conflict**    | `Service 'SparkUI' could not bind on port 4040`         | Normal - Spark auto-finds next port         |
 | **Out of Memory**    | `java.lang.OutOfMemoryError`                            | Increase `driver_memory` in config.py       |
+
+### I want to make sure I am not being charged
+
+To ensure you are not incurring unexpected GCP costs, follow these steps:
+
+1.  **Run the cleanup script**: This is the most important step.
+    ```bash
+    ./gcp_setup.sh --delete
+    ```
+2.  **Verify resource deletion**: Use the verification commands listed in **Section 11 (Cleanup Checklist)**. If the output of the `gcloud` list commands for clusters, instances, disks, and addresses is empty, you have successfully removed all major compute resources.
 
 ### Debugging Commands
 
