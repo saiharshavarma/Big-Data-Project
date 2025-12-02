@@ -1,0 +1,32 @@
+# Advanced Anomaly Detection Dependencies
+# =========================================
+
+# Core data processing (already in main requirements.txt)
+pyspark>=3.4.0
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Deep Learning (LSTM Autoencoder)
+tensorflow>=2.13.0
+keras>=2.13.0
+
+# Time Series Analysis (Prophet)
+prophet>=1.1.4
+
+# Machine Learning (Isolation Forest, preprocessing)
+scikit-learn>=1.3.0
+
+# Changepoint Detection
+ruptures>=1.1.8
+
+# Statistical Analysis
+scipy>=1.11.0
+statsmodels>=0.14.0
+
+# Visualization (for notebooks)
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.17.0
+
+# Utilities
+pytz>=2023.3
