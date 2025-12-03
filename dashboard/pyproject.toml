@@ -8,9 +8,8 @@ dependencies = [
     "polars>=0.20.0",
     "plotly>=5.18.0",
     "google-cloud-storage>=2.14.0",
+    "pyarrow>=14.0.0",
 ]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
+[tool.uv]
+dev-dependencies = []

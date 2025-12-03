@@ -641,7 +641,7 @@ gcloud dataproc clusters describe funnelpulse-cluster --region=us-central1
 | ---------- | ------------------------ | ------------------------------------------------------------------------ |
 | **HIGH**   | Harden Kafka Integration | Productionize Kafka (security, HA, managed service like Confluent Cloud) |
 | **HIGH**   | Alerting System          | Email/Slack notifications for anomalies                                  |
-| **MEDIUM** | Dashboard                | Streamlit interactive visualization - IMPLEMENTED                        |
+| **MEDIUM** | Dashboard                | Streamlit/Dash interactive visualization                                 |
 | **MEDIUM** | ML Anomaly Detection     | Isolation Forest, LSTM for better detection                              |
 | **LOW**    | CI/CD                    | GitHub Actions, Terraform for infrastructure                             |
 | **LOW**    | Data Quality             | Great Expectations integration                                           |
