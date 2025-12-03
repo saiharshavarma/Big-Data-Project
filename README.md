@@ -148,7 +148,18 @@ Big-Data-Project/
 │   └── gold_anomalies_hourly_brand/
 │
 ├── stream_input/                # Streaming simulation files (gitignored)
-└── checkpoints/                 # Spark streaming checkpoints (gitignored)
+├── checkpoints/                 # Spark streaming checkpoints (gitignored)
+│
+└── dashboard/                   # Streamlit dashboard application
+    ├── app.py                   # Main overview page
+    ├── pages/                   # Multi-page dashboard
+    │   ├── 1_Brands.py         # Brand analytics
+    │   ├── 2_Categories.py     # Category performance
+    │   ├── 3_Price_Bands.py    # Price segment analysis
+    │   └── 4_Anomalies.py      # Anomaly monitoring
+    ├── utils/                   # Shared utilities
+    ├── Dockerfile              # Cloud Run deployment
+    └── deploy.sh               # Deployment script
 ```
 
 ---
@@ -630,7 +641,7 @@ gcloud dataproc clusters describe funnelpulse-cluster --region=us-central1
 | ---------- | ------------------------ | ------------------------------------------------------------------------ |
 | **HIGH**   | Harden Kafka Integration | Productionize Kafka (security, HA, managed service like Confluent Cloud) |
 | **HIGH**   | Alerting System          | Email/Slack notifications for anomalies                                  |
-| **MEDIUM** | Dashboard                | Streamlit/Dash interactive visualization                                 |
+| **MEDIUM** | Dashboard                | Streamlit interactive visualization - IMPLEMENTED                        |
 | **MEDIUM** | ML Anomaly Detection     | Isolation Forest, LSTM for better detection                              |
 | **LOW**    | CI/CD                    | GitHub Actions, Terraform for infrastructure                             |
 | **LOW**    | Data Quality             | Great Expectations integration                                           |
@@ -713,6 +724,67 @@ The cleaning logic, aggregations, and anomaly detection remain unchanged - only 
 
 ---
 
+## 15. Dashboard
+
+The FunnelPulse Dashboard is a multi-page Streamlit application for interactive visualization of funnel metrics.
+
+### Features
+
+| Page | Description |
+|------|-------------|
+| **Overview** | KPI cards, conversion funnel, overall metrics |
+| **Brands** | Brand performance, revenue trends, conversion charts |
+| **Categories** | Category-level analysis and comparisons |
+| **Price Bands** | Performance by price segment |
+| **Anomalies** | Anomaly timeline, alerts table, brand deep-dive |
+
+### Local Development
+
+```bash
+cd dashboard
+
+# Install dependencies (using uv)
+uv sync
+
+# Run the dashboard
+uv run streamlit run app.py
+
+# Or with standard Python
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+The dashboard will be available at `http://localhost:8501`.
+
+### Cloud Run Deployment
+
+Deploy to Google Cloud Run for production use:
+
+```bash
+cd dashboard
+
+# Set your GCP project (if different from default)
+export GCP_PROJECT="your-project-id"
+export GCS_BUCKET="your-bucket-name"
+
+# Deploy
+./deploy.sh
+```
+
+The deployment:
+- Uses Cloud Run's free tier (2M requests/month)
+- Reads data from GCS bucket
+- Auto-scales based on traffic
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ENVIRONMENT` | `local` | `local` or `gcp` |
+| `GCS_BUCKET` | `funnelpulse-ss18851-data` | GCS bucket for data |
+
+---
+
 ## Summary
 
 FunnelPulse provides a complete, production-ready foundation for e-commerce funnel analytics:
@@ -726,12 +798,12 @@ FunnelPulse provides a complete, production-ready foundation for e-commerce funn
 | GCP Dataproc Deployment                 | ✅ Working                               |
 | One-Click Setup Script                  | ✅ Available                             |
 | Kafka Integration                       | ✅ Implemented (GCP Dataproc + Kafka VM) |
+| Interactive Dashboard                   | ✅ Implemented (Streamlit + Cloud Run)   |
 
 **Next Developer Focus Areas**:
 
 1.  Add alerting/notification system
-2.  Build interactive dashboard
-3.  Enhance anomaly detection with ML models
+2.  Enhance anomaly detection with ML models
 
 ---
 
