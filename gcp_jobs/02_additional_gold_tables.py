@@ -18,7 +18,7 @@ from pyspark.sql.functions import (
 )
 
 # GCS Configuration
-GCS_BUCKET = "gs://funnelpulse-ss18851-data"
+GCS_BUCKET = "gs://big-data-project-480103-funnelpulse-data"
 TABLES_DIR = f"{GCS_BUCKET}/tables"
 
 SILVER_PATH = f"{TABLES_DIR}/silver_events"

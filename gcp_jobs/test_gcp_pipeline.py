@@ -8,7 +8,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import count, sum as _sum
 
 # GCS paths
-GCS_BUCKET = "gs://funnelpulse-ss18851-data"
+GCS_BUCKET = "gs://big-data-project-480103-funnelpulse-data"
 TABLES_DIR = f"{GCS_BUCKET}/tables"
 
 def main():

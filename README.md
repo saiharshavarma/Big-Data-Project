@@ -148,7 +148,22 @@ Big-Data-Project/
 │   └── gold_anomalies_hourly_brand/
 │
 ├── stream_input/                # Streaming simulation files (gitignored)
-└── checkpoints/                 # Spark streaming checkpoints (gitignored)
+├── checkpoints/                 # Spark streaming checkpoints (gitignored)
+│
+└── dashboard/                   # Streamlit dashboard application
+    ├── Overview.py              # Main overview page
+    ├── pages/                   # Multi-page dashboard
+    │   ├── Anomaly_Detection.py # Anomaly monitoring & root cause analysis
+    │   ├── Brand_Performance.py # Brand analytics & comparisons
+    │   ├── Category_Analysis.py # Category performance
+    │   └── Price_Segmentation.py # Price segment analysis
+    ├── utils/                   # Shared utilities
+    │   ├── data_loader.py      # GCS/local data loading with caching
+    │   ├── charts.py           # Plotly chart functions
+    │   └── analytics.py        # Business analytics functions
+    ├── requirements.txt        # Python dependencies
+    ├── Dockerfile              # Cloud Run deployment
+    └── deploy.sh               # GCP deployment script
 ```
 
 ---
@@ -746,6 +761,71 @@ The cleaning logic, aggregations, and anomaly detection remain unchanged - only 
 
 ---
 
+## 15. Dashboard
+
+The FunnelPulse Dashboard is a multi-page Streamlit application for interactive visualization and analysis of funnel metrics.
+
+### Features
+
+| Page | Description |
+|------|-------------|
+| **Overview** | KPIs, conversion funnel visualization, problem statement, funnel insights |
+| **Brand Performance** | Revenue distribution, conversion comparisons, traffic vs. conversion analysis |
+| **Category Analysis** | Category-level revenue and conversion analysis |
+| **Price Segmentation** | Performance analysis across price bands |
+| **Anomaly Detection** | Anomaly timeline, root cause analysis, brand deep-dive |
+
+### Quick Start (Clone & Run)
+
+**Prerequisites:** Python 3.11+ and [uv](https://github.com/astral-sh/uv) package manager.
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/YOUR_USERNAME/Big-Data-Project.git
+cd Big-Data-Project/dashboard
+
+# 2. Install dependencies
+uv sync
+
+# 3. Run the dashboard (with sample GCS data)
+ENVIRONMENT=gcp GCS_BUCKET=big-data-project-480103-funnelpulse-data uv run streamlit run Overview.py
+```
+
+The dashboard will be available at `http://localhost:8501`.
+
+### Running with Local Data
+
+If you want to run the full pipeline locally:
+
+```bash
+# 1. Download the dataset from Kaggle (see Section 4)
+# 2. Run the Jupyter notebooks in order:
+#    - notebooks/01_batch_bronze_silver_gold.ipynb
+#    - notebooks/02_additional_gold_tables.ipynb
+#    - notebooks/05_anomaly_detection_hourly_brand.ipynb
+# 3. Run the dashboard without environment variables
+cd dashboard
+uv run streamlit run Overview.py
+```
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ENVIRONMENT` | `local` | Set to `gcp` to read from GCS |
+| `GCS_BUCKET` | - | GCS bucket name (required if `ENVIRONMENT=gcp`) |
+
+### Cloud Run Deployment
+
+```bash
+cd dashboard
+export GCP_PROJECT="your-project-id"
+export GCS_BUCKET="your-bucket-name"
+./deploy.sh
+```
+
+---
+
 ## Summary
 
 FunnelPulse provides a complete, production-ready foundation for e-commerce funnel analytics:
@@ -760,12 +840,14 @@ FunnelPulse provides a complete, production-ready foundation for e-commerce funn
 | GCP Dataproc Deployment                 | ✅ Working                               |
 | One-Click Setup Script                  | ✅ Available                             |
 | Kafka Integration                       | ✅ Implemented (GCP Dataproc + Kafka VM) |
+| Interactive Dashboard                   | ✅ Implemented (Streamlit + Cloud Run)   |
 
 **Next Developer Focus Areas**:
 
 1.  Add alerting/notification system
 2.  Build interactive dashboard
 3.  ~~Enhance anomaly detection with ML models~~ ✅ **DONE**
+2.  Enhance anomaly detection with ML models
 
 ---
 

@@ -16,7 +16,7 @@ from pyspark.sql.functions import (
 from pyspark.sql.window import Window
 
 # GCS Configuration
-GCS_BUCKET = "gs://funnelpulse-ss18851-data"
+GCS_BUCKET = "gs://big-data-project-480103-funnelpulse-data"
 TABLES_DIR = f"{GCS_BUCKET}/tables"
 
 GOLD_HOURLY_BRAND_PATH = f"{TABLES_DIR}/gold_funnel_hourly_brand"
