@@ -20,11 +20,11 @@ set -e
 # =============================================================================
 # CONFIGURATION - Edit these values as needed
 # =============================================================================
-PROJECT_ID="funnelpulse-479923"
+PROJECT_ID="big-data-project-480103"
 REGION="us-central1"
 ZONE="us-central1-a"
 CLUSTER_NAME="funnelpulse-cluster"
-GCS_BUCKET="gs://funnelpulse-ss18851-data"
+GCS_BUCKET="gs://big-data-project-480103-funnelpulse-data"
 
 # Cluster configuration
 MASTER_MACHINE_TYPE="n1-standard-2"

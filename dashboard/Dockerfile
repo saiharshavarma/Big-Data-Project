@@ -14,7 +14,8 @@ RUN pip install --no-cache-dir \
     polars>=0.20.0 \
     plotly>=5.18.0 \
     google-cloud-storage>=2.14.0 \
-    pyarrow>=14.0.0
+    fsspec>=2023.10.0 \
+    gcsfs>=2023.10.0
 
 # Copy application code
 COPY . .
@@ -26,5 +27,5 @@ EXPOSE 8080
 HEALTHCHECK CMD curl --fail http://localhost:8080/_stcore/health || exit 1
 
 # Run Streamlit
-ENTRYPOINT ["streamlit", "run", "app.py", "--server.port=8080", "--server.address=0.0.0.0", "--server.headless=true"]
+ENTRYPOINT ["streamlit", "run", "Overview.py", "--server.port=8080", "--server.address=0.0.0.0", "--server.headless=true"]
 

@@ -151,15 +151,19 @@ Big-Data-Project/
 ├── checkpoints/                 # Spark streaming checkpoints (gitignored)
 │
 └── dashboard/                   # Streamlit dashboard application
-    ├── app.py                   # Main overview page
+    ├── Overview.py              # Main overview page
     ├── pages/                   # Multi-page dashboard
-    │   ├── 1_Brands.py         # Brand analytics
-    │   ├── 2_Categories.py     # Category performance
-    │   ├── 3_Price_Bands.py    # Price segment analysis
-    │   └── 4_Anomalies.py      # Anomaly monitoring
+    │   ├── Anomaly_Detection.py # Anomaly monitoring & root cause analysis
+    │   ├── Brand_Performance.py # Brand analytics & comparisons
+    │   ├── Category_Analysis.py # Category performance
+    │   └── Price_Segmentation.py # Price segment analysis
     ├── utils/                   # Shared utilities
+    │   ├── data_loader.py      # GCS/local data loading with caching
+    │   ├── charts.py           # Plotly chart functions
+    │   └── analytics.py        # Business analytics functions
+    ├── requirements.txt        # Python dependencies
     ├── Dockerfile              # Cloud Run deployment
-    └── deploy.sh               # Deployment script
+    └── deploy.sh               # GCP deployment script
 ```
 
 ---
@@ -726,62 +730,66 @@ The cleaning logic, aggregations, and anomaly detection remain unchanged - only 
 
 ## 15. Dashboard
 
-The FunnelPulse Dashboard is a multi-page Streamlit application for interactive visualization of funnel metrics.
+The FunnelPulse Dashboard is a multi-page Streamlit application for interactive visualization and analysis of funnel metrics.
 
 ### Features
 
 | Page | Description |
 |------|-------------|
-| **Overview** | KPI cards, conversion funnel, overall metrics |
-| **Brands** | Brand performance, revenue trends, conversion charts |
-| **Categories** | Category-level analysis and comparisons |
-| **Price Bands** | Performance by price segment |
-| **Anomalies** | Anomaly timeline, alerts table, brand deep-dive |
+| **Overview** | KPIs, conversion funnel visualization, problem statement, funnel insights |
+| **Brand Performance** | Revenue distribution, conversion comparisons, traffic vs. conversion analysis |
+| **Category Analysis** | Category-level revenue and conversion analysis |
+| **Price Segmentation** | Performance analysis across price bands |
+| **Anomaly Detection** | Anomaly timeline, root cause analysis, brand deep-dive |
 
-### Local Development
+### Quick Start (Clone & Run)
+
+**Prerequisites:** Python 3.11+ and [uv](https://github.com/astral-sh/uv) package manager.
 
 ```bash
-cd dashboard
+# 1. Clone the repository
+git clone https://github.com/YOUR_USERNAME/Big-Data-Project.git
+cd Big-Data-Project/dashboard
 
-# Install dependencies (using uv)
+# 2. Install dependencies
 uv sync
 
-# Run the dashboard
-uv run streamlit run app.py
-
-# Or with standard Python
-pip install -r requirements.txt
-streamlit run app.py
+# 3. Run the dashboard (with sample GCS data)
+ENVIRONMENT=gcp GCS_BUCKET=big-data-project-480103-funnelpulse-data uv run streamlit run Overview.py
 ```
 
 The dashboard will be available at `http://localhost:8501`.
 
-### Cloud Run Deployment
+### Running with Local Data
 
-Deploy to Google Cloud Run for production use:
+If you want to run the full pipeline locally:
 
 ```bash
+# 1. Download the dataset from Kaggle (see Section 4)
+# 2. Run the Jupyter notebooks in order:
+#    - notebooks/01_batch_bronze_silver_gold.ipynb
+#    - notebooks/02_additional_gold_tables.ipynb
+#    - notebooks/05_anomaly_detection_hourly_brand.ipynb
+# 3. Run the dashboard without environment variables
 cd dashboard
-
-# Set your GCP project (if different from default)
-export GCP_PROJECT="your-project-id"
-export GCS_BUCKET="your-bucket-name"
-
-# Deploy
-./deploy.sh
+uv run streamlit run Overview.py
 ```
-
-The deployment:
-- Uses Cloud Run's free tier (2M requests/month)
-- Reads data from GCS bucket
-- Auto-scales based on traffic
 
 ### Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `ENVIRONMENT` | `local` | `local` or `gcp` |
-| `GCS_BUCKET` | `funnelpulse-ss18851-data` | GCS bucket for data |
+| `ENVIRONMENT` | `local` | Set to `gcp` to read from GCS |
+| `GCS_BUCKET` | - | GCS bucket name (required if `ENVIRONMENT=gcp`) |
+
+### Cloud Run Deployment
+
+```bash
+cd dashboard
+export GCP_PROJECT="your-project-id"
+export GCS_BUCKET="your-bucket-name"
+./deploy.sh
+```
 
 ---
 

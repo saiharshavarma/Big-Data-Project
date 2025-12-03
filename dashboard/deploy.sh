@@ -7,7 +7,7 @@ set -e
 PROJECT_ID="${GCP_PROJECT:-funnelpulse-479923}"
 REGION="${GCP_REGION:-us-central1}"
 SERVICE_NAME="funnelpulse-dashboard"
-GCS_BUCKET="${GCS_BUCKET:-funnelpulse-ss18851-data}"
+GCS_BUCKET="${GCS_BUCKET:-big-data-project-480103-funnelpulse-data}"
 
 echo "Deploying FunnelPulse Dashboard to Cloud Run"
 echo "============================================="

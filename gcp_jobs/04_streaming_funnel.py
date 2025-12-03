@@ -20,7 +20,7 @@ from pyspark.sql.functions import (
 import time
 
 # GCS Configuration
-GCS_BUCKET = "gs://funnelpulse-ss18851-data"
+GCS_BUCKET = "gs://big-data-project-480103-funnelpulse-data"
 TABLES_DIR = f"{GCS_BUCKET}/tables"
 STREAM_INPUT_DIR = f"{GCS_BUCKET}/stream_input"
 CHECKPOINTS_DIR = f"{GCS_BUCKET}/checkpoints"

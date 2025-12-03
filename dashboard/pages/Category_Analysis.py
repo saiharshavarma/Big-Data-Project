@@ -7,17 +7,23 @@ Performance analysis by product category.
 import streamlit as st
 import polars as pl
 
-from utils.data_loader import load_daily_category, get_date_range
+from utils.data_loader import load_daily_category
 from utils.charts import create_bar_chart, format_currency, format_number
 
 st.set_page_config(
-    page_title="Category Performance - FunnelPulse",
-    page_icon="chart_with_upwards_trend",
+    page_title="Category Analysis - FunnelPulse",
+    page_icon=None,
     layout="wide",
 )
 
-st.title("Category Performance")
-st.markdown("Performance analysis by product category")
+st.title("Category Performance Analysis")
+st.markdown(
+    """
+    **Business Context**: Product categories behave differently in the funnel. 
+    Some categories drive traffic but struggle to convert, while others have loyal buyers but limited reach.
+    Category-level analysis reveals where to focus product development and marketing.
+    """
+)
 
 # Load data
 daily_category = load_daily_category()
@@ -25,24 +31,6 @@ daily_category = load_daily_category()
 if daily_category.is_empty():
     st.error("No data available. Please run the batch pipeline first.")
     st.stop()
-
-# Sidebar filters
-st.sidebar.header("Filters")
-
-# Date range filter
-min_date, max_date = get_date_range(daily_category)
-if min_date and max_date:
-    date_range = st.sidebar.date_input(
-        "Date Range",
-        value=(min_date, max_date),
-        min_value=min_date,
-        max_value=max_date,
-    )
-
-    if len(date_range) == 2:
-        daily_category = daily_category.filter(
-            (pl.col("date") >= date_range[0]) & (pl.col("date") <= date_range[1])
-        )
 
 st.divider()
 

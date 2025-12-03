@@ -11,13 +11,19 @@ from utils.data_loader import load_hourly_price_band
 from utils.charts import create_bar_chart, create_line_chart, format_currency, format_number
 
 st.set_page_config(
-    page_title="Price Band Analysis - FunnelPulse",
-    page_icon="chart_with_upwards_trend",
+    page_title="Price Segmentation Analysis - FunnelPulse",
+    page_icon=None,
     layout="wide",
 )
 
-st.title("Price Band Analysis")
-st.markdown("Performance analysis by price segment")
+st.title("Price Segmentation Analysis")
+st.markdown(
+    """
+    **Business Context**: Customer behavior varies dramatically by price point. 
+    Budget shoppers browse more but convert quickly, while premium shoppers require more consideration.
+    Understanding these patterns informs pricing strategy and inventory decisions.
+    """
+)
 
 # Load data
 hourly_price = load_hourly_price_band()

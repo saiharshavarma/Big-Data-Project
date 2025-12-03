@@ -18,15 +18,22 @@ from utils.charts import (
     create_brand_deep_dive,
     format_number,
 )
+from utils.analytics import analyze_anomaly_patterns
 
 st.set_page_config(
-    page_title="Anomaly Monitoring - FunnelPulse",
-    page_icon="chart_with_upwards_trend",
+    page_title="Anomaly Detection - FunnelPulse",
+    page_icon=None,
     layout="wide",
 )
 
-st.title("Anomaly Monitoring")
-st.markdown("Statistical anomaly detection for conversion rate changes")
+st.title("Conversion Anomaly Detection")
+st.markdown(
+    """
+    **Business Context**: Sudden changes in conversion rates often indicate problems (broken checkout, pricing errors) 
+    or opportunities (viral marketing, competitor issues). Statistical anomaly detection surfaces these events 
+    in real-time, enabling proactive investigation before significant revenue impact.
+    """
+)
 
 # Load data
 anomalies = load_anomalies()
@@ -68,8 +75,12 @@ st.divider()
 st.markdown("### Anomalies Over Time")
 
 # Aggregate anomalies by date and type
+# Use window_start and extract date from it
 anomaly_by_date = (
-    anomalies.group_by(["window_date", "anomaly_type"])
+    anomalies.with_columns(
+        pl.col("window_start").cast(pl.Date).alias("window_date")
+    )
+    .group_by(["window_date", "anomaly_type"])
     .agg(pl.count().alias("count"))
     .sort(["window_date", "anomaly_type"])
 )
@@ -105,7 +116,6 @@ st.markdown("### Anomaly Details")
 
 # Select columns to display
 display_cols = [
-    "window_date",
     "window_start",
     "brand",
     "anomaly_type",
@@ -116,7 +126,9 @@ display_cols = [
 ]
 
 available_cols = [c for c in display_cols if c in filtered_anomalies.columns]
-display_df = filtered_anomalies.select(available_cols).sort("window_date", descending=True)
+# Sort by window_start if available, otherwise by brand
+sort_col = "window_start" if "window_start" in available_cols else "brand"
+display_df = filtered_anomalies.select(available_cols).sort(sort_col, descending=True)
 
 # Add severity indicator
 display_df = display_df.with_columns(
@@ -166,17 +178,19 @@ if selected_brand and not hourly_brand.is_empty():
     brand_anomalies = filtered_anomalies.filter(pl.col("brand") == selected_brand)
     if not brand_anomalies.is_empty():
         st.markdown(f"#### Anomalies for {selected_brand}")
-        st.dataframe(
-            brand_anomalies.select(available_cols).to_pandas().style.format(
-                {
-                    "conversion_rate": "{:.4f}",
-                    "z_brand": "{:.2f}",
-                    "z_brand_hour": "{:.2f}",
-                }
-            ),
-            use_container_width=True,
-            hide_index=True,
-        )
+        brand_anomalies_display = brand_anomalies.select(available_cols)
+        if not brand_anomalies_display.is_empty():
+            st.dataframe(
+                brand_anomalies_display.to_pandas().style.format(
+                    {
+                        "conversion_rate": "{:.4f}",
+                        "z_brand": "{:.2f}",
+                        "z_brand_hour": "{:.2f}",
+                    }
+                ),
+                use_container_width=True,
+                hide_index=True,
+            )
     else:
         st.info(f"No anomalies detected for {selected_brand} with current filters.")
 
@@ -202,20 +216,76 @@ st.dataframe(
     hide_index=True,
 )
 
+# Root Cause Analysis Section
+if not anomalies.is_empty():
+    st.divider()
+    st.markdown("## Root Cause Analysis")
+    
+    anomaly_insights = analyze_anomaly_patterns(anomalies)
+    
+    col_rca1, col_rca2 = st.columns(2)
+    
+    with col_rca1:
+        st.markdown("### Pattern Analysis")
+        if anomaly_insights.get("peak_anomaly_hour"):
+            peak_hour = anomaly_insights["peak_anomaly_hour"]
+            st.info(
+                f"**Peak Anomaly Hour**: {peak_hour['hour']}:00\n\n"
+                f"Most anomalies occur at hour {peak_hour['hour']} ({peak_hour['count']} incidents). "
+                f"This suggests time-of-day factors may influence conversion rates."
+            )
+        
+        if anomaly_insights.get("most_affected_brands"):
+            st.markdown("**Most Affected Brands**")
+            affected_df = pl.DataFrame(anomaly_insights["most_affected_brands"])
+            st.dataframe(
+                affected_df.to_pandas(),
+                use_container_width=True,
+                hide_index=True,
+            )
+    
+    with col_rca2:
+        st.markdown("### Business Impact")
+        drop_count = anomaly_insights.get("drops", 0)
+        spike_count = anomaly_insights.get("spikes", 0)
+        
+        if drop_count > spike_count:
+            st.error(
+                f"**Primary Concern: Conversion Drops**\n\n"
+                f"{drop_count} drop anomalies detected ({anomaly_insights.get('drop_percentage', 0):.1f}% of total). "
+                f"These represent potential revenue loss events requiring immediate investigation."
+            )
+        else:
+            st.success(
+                f"**Positive Signals: Conversion Spikes**\n\n"
+                f"{spike_count} spike anomalies detected ({anomaly_insights.get('spike_percentage', 0):.1f}% of total). "
+                f"Analyze these spikes to identify successful strategies that can be replicated."
+            )
+        
+        st.markdown(
+            f"**Average Severity**: {anomaly_insights.get('avg_severity', 0):.2f} z-score\n\n"
+            f"Higher z-scores indicate more significant deviations from baseline performance."
+        )
+
 # Methodology note
 st.divider()
-st.markdown("### Methodology")
+st.markdown("### Detection Methodology")
 st.markdown(
     """
-    Anomalies are detected using **Z-score analysis**:
+    Anomalies are detected using **statistical Z-score analysis**:
 
-    1. **Per-brand baseline**: Mean and standard deviation of conversion rate across all hours
-    2. **Per-brand-hour baseline**: Mean and standard deviation at each hour of day (0-23)
-    3. **Z-score calculation**: `z = (current - mean) / std`
-    4. **Thresholds**:
-       - **Drop**: z-score <= -2.0 (conversion significantly below normal)
-       - **Spike**: z-score >= +2.0 (conversion significantly above normal)
-       - Minimum 50 views required to flag anomaly
+    1. **Baseline Calculation**: 
+       - Per-brand: Mean and standard deviation of conversion rate across all time periods
+       - Per-brand-hour: Mean and standard deviation at each hour of day (0-23) to account for daily patterns
+    
+    2. **Z-score Calculation**: `z = (current_conversion_rate - baseline_mean) / baseline_stddev`
+    
+    3. **Anomaly Thresholds**:
+       - **Drop Anomaly**: z-score ≤ -2.0 (conversion significantly below normal, potential issue)
+       - **Spike Anomaly**: z-score ≥ +2.0 (conversion significantly above normal, investigate success factors)
+       - **Minimum Views**: 50 views required to ensure statistical significance
+    
+    4. **Business Value**: Early detection allows proactive investigation before revenue impact becomes significant.
     """
 )
 
